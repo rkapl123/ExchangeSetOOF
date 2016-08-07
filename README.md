@@ -1,5 +1,5 @@
 # ExchangeSetOOF
-programmatic setting of automatic replies (out of office) in an exchange environment based on OOF appointments.  
+programmatic setting of automatic replies (out of office) in an exchange environment based on OOF appointments.
 
 ExchangeSetOOF logs in to the currently logged in users account (using EWS AutoDiscover with users account Emailaddress using System.DirectoryServices.AccountManagement)
 and searches the appointments between today and the next business day (based on only Austrian Holidays, this is currently hardcoded) for appointments being set "away".
@@ -12,14 +12,14 @@ the replies are stored in the registry as a template, which is being restored af
 
 The settings for templates can be changed in the code accordingly:
 
-const string templateSpec = "VORLAGE:"; // prefix that defines OOF reply bodies to act as a template, ALWAYS uppercase (converted in code)
-public static readonly string[] DateLang1 = { "!DatumBis!", "!Datum!", "am", "von", "bis" };
-public static readonly string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from", "until" };
+const string templateSpec = "VORLAGE:"; // prefix defining OOF reply bodies as a template, ALWAYS uppercase!  
+public static readonly string[] DateLang1 = { "!DatumBis!", "!Datum!", "am", "von", "bis" };  
+public static readonly string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from", "until" };  
 
 Placeholders are being replaced using following rule (hardcoded):  
-!DatumBis!/!DateTo! changed to DateLang1/DateLang2[4] + " " + OOF_EndDate  
-!Datum!/!Date! changed to DateLang1/DateLang2[3] + " " + OOF_StartDate + " " + DateLang1/DateLang2[4] + " " + OOF_EndDate  
-in case of whole single day absences both !DatumBis/DateTo! and !Datum/Date! are being replaced by DateLang1/DateLang2[2] + " " + OOF_EndDate  
+!DatumBis!/!DateTo! changed to DateLangX[4] + " " + OOF_EndDate  
+!Datum!/!Date! changed to DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate  
+in case of whole single day absences both !DatumBis/DateTo! and !Datum/Date! are being replaced by DateLangX[2] + " " + OOF_EndDate  
 
 
 Installation: After compilation, copy ExchangeSetOOF.exe and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
