@@ -22,7 +22,7 @@ Placeholders are being replaced using following rule (hardcoded):
 in case of whole single day absences both !DatumBis/DateTo! and !Datum/Date! are being replaced by DateLang1/DateLang2[2] + " " + OOF_EndDate 
 
 
-Installation: After compilation, copy ExchangeSetOOF.exe and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll and 
+Installation: After compilation, copy ExchangeSetOOF.exe and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll 
 and Microsoft.Exchange.WebServices.dll) anywhere you want (no config required), 
 and start on a regular basis (e.g. using task scheduler), execution hints are sent to stdout for problem determination.
 
