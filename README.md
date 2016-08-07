@@ -6,6 +6,7 @@ and searches the appointments between today and the next business day (based on 
 
 If any such appointment is found, ExchangeSetOOF replaces the template's date placeholder with the respective end date and (if wanted) also start date.
 The languages used for the replacement of the date placeholders is hardcoded german and english (at the top of the program).
+The automatic reply (out of office) is being scheduled to start from the Start Date of the OOF appointment and end on the End Date of the OOF appointment.
 
 If no such appointment is found and the internal and external replies both contain a template specification (being "VORLAGE:", hardcoded at the top of the program),
 the replies are stored in the registry as a template, which is being restored after the OOF period has passed.
@@ -18,11 +19,11 @@ public static readonly string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from"
 
 Placeholders are being replaced using following rule (hardcoded):  
 DateLangX[0] changed to DateLangX[4] + " " + OOF_EndDate  
---> "bis/until dd.mm.yyyy"  
+--> "bis/until dd.mm.yyyy", in case of time component in OOF_EndDate: "bis/until dd.mm.yyyy hh:mm:ss"   
 DateLangX[1] changed to DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate  
---> "von/from dd.mm.yyyy bis/until dd.mm.yyyy"  
-in case of whole single day absences both DateLangX[0] and DateLangX[1] are being replaced by DateLangX[2] + " " + OOF_EndDate  
---> "am/on dd.mm.yyyy"  
+--> "von/from dd.mm.yyyy bis/until dd.mm.yyyy", in case of time component in OOF_EndDate/StartDate: "bis/until dd.mm.yyyy hh:mm:ss"  
+in case of whole single day absences both DateLangX[0] and DateLangX[1] are being replaced by DateLangX[2] + " " + OOF_StartDate  
+--> "am/on dd.mm.yyyy", there can be no time component for whole day absences!  
 
 Install: copy ExchangeSetOOF.exe and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
 and Microsoft.Exchange.WebServices.dll) anywhere you want (no config required),  
