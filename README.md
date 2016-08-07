@@ -22,8 +22,10 @@ Placeholders are being replaced using following rule (hardcoded):
 in case of whole single day absences both !DatumBis/DateTo! and !Datum/Date! are being replaced by DateLangX[2] + " " + OOF_EndDate  
 
 
-Installation: After compilation, copy ExchangeSetOOF.exe and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
+Install: copy ExchangeSetOOF.exe and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
 and Microsoft.Exchange.WebServices.dll) anywhere you want (no config required),  
 and start on a regular basis (e.g. using task scheduler), execution hints are sent to stdout for problem determination.
 
-Building: to compile succesfully, you need to download Managed EWS (used and tested here: 2.2) and set references to above assemblies accordingly.
+Build: Download/clone repository to a folder named ExchangeSetOOF.  
+To compile succesfully, you also need to download Managed EWS (used/tested version 2.2: https://www.microsoft.com/en-us/download/details.aspx?id=42951) and set references to Microsoft.Exchange.WebServices.Auth.dll
+and Microsoft.Exchange.WebServices.dll accordingly.
