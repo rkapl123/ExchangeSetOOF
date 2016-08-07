@@ -10,10 +10,10 @@ namespace ExchangeSetOOF
         static ExchangeService service;
         const string templateSpec = "VORLAGE:"; // prefix that defines OOF reply bodies to act as a template, ALWAYS uppercase (converted in code)
         // placeholders for two languages, being replaced using following rule (hardcoded):
-        // !DatumBis!/!DateTo! changed to DateLang1/DateLang2[4] + " " + OOF_EndDate
-        // !Datum!/!Date! changed to DateLang1/DateLang2[3] + " " + OOF_StartDate + " " + DateLang1/DateLang2[4] + " " + OOF_EndDate
-        // in case of whole single day absences both !DatumBis/DateTo! and !Datum/Date! 
-        // are being replaced by DateLang1/DateLang2[2] + " " + OOF_EndDate 
+        // DateLangX[0] changed to DateLangX[4] + " " + OOF_EndDate
+        // DateLangX[1] changed to DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate
+        // in case of whole single day absences both DateLangX[0] and DateLangX[1] 
+        // are being replaced by DateLangX[2] + " " + OOF_EndDate 
         public static readonly string[] DateLang1 = { "!DatumBis!", "!Datum!", "am", "von", "bis" };
         public static readonly string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from", "until" };
 
@@ -29,7 +29,7 @@ namespace ExchangeSetOOF
 
             // find next "out of office" appointment being either today or on the next business day
             Console.WriteLine("getting oof appointments..");
-            DateTime startDate = DateTime.Now;    //startDate = DateTime.Parse("2016-08-05");
+            DateTime startDate = DateTime.Now;    //startDate = DateTime.Parse("2016-08-05"); //uncomment to test/debug
             DateTime endDate = startDate.AddBusinessDays(2); // need to add 2 days because otherwise the endDate is <nextBDate> 00:00:00
             // Initialize the calendar folder object with only the folder ID.
             FindItemsResults<Appointment> appointments = null;
@@ -241,7 +241,8 @@ namespace ExchangeSetOOF
             if ((theDate.DayOfWeek == DayOfWeek.Saturday) || (theDate.DayOfWeek == DayOfWeek.Sunday)) {
                 return true;
             }
-            // floating (EasterSunday dependent) austrian holidays
+            // floating (EasterSunday dependent) austrian holidays:
+            // Easter Monday (Good Friday would be -2), ascension day (Christi Himmelfahrt), whit monday (Pfingstmontag), corpus christi day (Fronleichnam)
             if ((theDate == EasterSunday(theDate.Year).AddDays(1)) || (theDate == EasterSunday(theDate.Year).AddDays(39)) || (theDate == EasterSunday(theDate.Year).AddDays(50)) || (theDate == EasterSunday(theDate.Year).AddDays(60))) {
                 return true;
             }
@@ -258,8 +259,8 @@ namespace ExchangeSetOOF
             //Console.WriteLine("{0}", DateTime.Parse("2012-12-24").isHoliday());
             //Console.WriteLine("{0}", DateTime.Parse("2012-12-25").isHoliday());
             //Console.WriteLine("{0}", DateTime.Parse("2012-12-26").isHoliday());
-            //Console.WriteLine("{0}", DateTime.Parse("2012-04-05").isHoliday()); //falsch - donnerstag
-            //Console.WriteLine("{0}", DateTime.Parse("2012-04-06").isHoliday()); //falsch - karfreitag
+            //Console.WriteLine("{0}", DateTime.Parse("2012-04-05").isHoliday()); //false - maundy thursday
+            //Console.WriteLine("{0}", DateTime.Parse("2012-04-06").isHoliday()); //false - good friday
             //Console.WriteLine("{0}", DateTime.Parse("2012-04-07").isHoliday());
             //Console.WriteLine("{0}", DateTime.Parse("2012-04-08").isHoliday());
             //Console.WriteLine("{0}", DateTime.Parse("2012-04-09").isHoliday());
