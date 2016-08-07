@@ -17,10 +17,12 @@ public static readonly string[] DateLang1 = { "!DatumBis!", "!Datum!", "am", "vo
 public static readonly string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from", "until" };  
 
 Placeholders are being replaced using following rule (hardcoded):  
-!DatumBis!/!DateTo! changed to DateLangX[4] + " " + OOF_EndDate  
-!Datum!/!Date! changed to DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate  
-in case of whole single day absences both !DatumBis/DateTo! and !Datum/Date! are being replaced by DateLangX[2] + " " + OOF_EndDate  
-
+DateLangX[0] changed to DateLangX[4] + " " + OOF_EndDate  
+--> "bis/until dd.mm.yyyy"  
+DateLangX[1] changed to DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate  
+--> "von/from dd.mm.yyyy bis/until dd.mm.yyyy"  
+in case of whole single day absences both DateLangX[0] and DateLangX[1] are being replaced by DateLangX[2] + " " + OOF_EndDate  
+--> "am/on dd.mm.yyyy"  
 
 Install: copy ExchangeSetOOF.exe and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
 and Microsoft.Exchange.WebServices.dll) anywhere you want (no config required),  
