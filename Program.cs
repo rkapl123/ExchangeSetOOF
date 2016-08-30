@@ -30,7 +30,7 @@ namespace ExchangeSetOOF
             logfile.WriteLine("starting ExchangeSetOOF");
             try {
                 StreamReader configfile = new StreamReader(System.Reflection.Assembly.GetExecutingAssembly().Location + ".cfg");
-                templateSpec = configfile.ReadLine();
+                templateSpec = configfile.ReadLine().ToUpper();
                 string DateLang1Str = configfile.ReadLine();
                 string DateLang2Str = configfile.ReadLine();
                 DateLang1 = DateLang1Str.Split('\t');

@@ -8,13 +8,14 @@ If any such appointment is found, ExchangeSetOOF replaces the template's date pl
 The languages used for the replacement of the date placeholders is hardcoded german and english (at the top of the program).
 The automatic reply (out of office) is being scheduled to start from the Start Date of the OOF appointment and end on the End Date of the OOF appointment.
 
-If no such appointment is found and the internal and external replies both contain a template specification (being "VORLAGE:", hardcoded at the top of the program),
+If no such appointment is found and the internal and external replies both contain a template specification (default hardcoded "VORLAGE:" at the top of the programm, but can be configured in ExchangeSetOOF.exe.cfg),
 the replies are stored in the registry as a template, which is being restored after the OOF period has passed.
 
-template specification and the two language placeholder settings can be configured in an accompanying file ExchangeSetOOF.exe.cfg:
-first Line: prefix that defines OOF reply bodies to act as a template, ALWAYS uppercase (converted in code)
-second line: tab separated array of placeholders and replacements for DateLang1, being replaced using rule described below.
-third line: same for DateLang2 
+two language placeholder settings can be configured in the accompanying file ExchangeSetOOF.exe.cfg together with the template specification:  
+first Line: template specification, a prefix that defines OOF reply bodies to act as a template, case insensitive (converted to uppercase in code)  
+second line: tab separated array of placeholders and replacements for DateLang1, being replaced using rule described below.  
+third line: same for DateLang2  
+
 The default settings for above (if no cfg file is found) can be changed in the code:
 
 string templateSpec = "VORLAGE:"; // prefix defining OOF reply bodies as a template, ALWAYS uppercase!  
