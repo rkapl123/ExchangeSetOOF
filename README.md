@@ -31,7 +31,7 @@ in case of whole single day absences both DateLangX[0] and DateLangX[1] are bein
 --> "am/on dd.mm.yyyy", there can be no time component for whole day absences!  
 
 Install: copy ExchangeSetOOF.exe (optionally ExchangeSetOOF.exe.cfg for different templatespec/replacements) and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
-and Microsoft.Exchange.WebServices.dll) anywhere you want and start on a regular basis (e.g. using task scheduler), execution hints are sent to c:\temp\ExchangeSetOOF.log for problem determination.
+and Microsoft.Exchange.WebServices.dll) anywhere you want and start on a regular basis (e.g. using task scheduler, the vb script "setTask.vbs" does this automatically), execution hints/exceptions are sent to c:\temp\ExchangeSetOOF.log for problem determination.
 
 Build: Download/clone repository to a folder named ExchangeSetOOF.  
 To compile succesfully, you also need to download Managed EWS (used/tested version 2.2: https://www.microsoft.com/en-us/download/details.aspx?id=42951) and set references to Microsoft.Exchange.WebServices.Auth.dll

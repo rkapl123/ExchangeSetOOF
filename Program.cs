@@ -54,7 +54,7 @@ namespace ExchangeSetOOF
             }
 
             // find next "out of office" appointment being either today or on the next business day
-            logfile.WriteLine("getting oof appointments..");
+            logfile.WriteLine("getting oof appointments");
             DateTime startDate = DateTime.Now;    //startDate = DateTime.Parse("2016-08-05"); //uncomment to test/debug
             DateTime endDate = startDate.AddBusinessDays(2); // need to add 2 days because otherwise the endDate is <nextBDate> 00:00:00
             // Initialize the calendar folder object with only the folder ID.
@@ -201,14 +201,14 @@ namespace ExchangeSetOOF
                 myOOF.State = OofState.Scheduled;
                 // Select the scheduled time period to send OOF replies.
                 myOOF.Duration = new TimeWindow(myStartOOFDate, myEndOOFDate);
-                logfile.WriteLine("oof appointment detected and OOFstate disabled, so schedule set, oof state set to scheduled and int/ext replies set changed accordingly:");
+                logfile.WriteLine("oof appointment detected, so schedule set to " + myStartOOFDate.ToString() + " - " + myEndOOFDate.ToString() + ", oof state set to scheduled and int/ext replies set changed accordingly:");
                 logfile.WriteLine("=================================================== internal Reply:");
                 logfile.WriteLine(myOOF.InternalReply.Message);
                 logfile.WriteLine("=================================================== external Reply:");
                 logfile.WriteLine(myOOF.ExternalReply.Message);
                 logfile.WriteLine("===================================================");
                 logfile.Flush();
-            } else if ((oofAppointment == null) && myOOF.State != OofState.Disabled) {
+            } else if (oofAppointment == null && myOOF.State != OofState.Disabled) {
                 // just in case exchange server didn't disable OOF automatically.
                 myOOF.State = OofState.Disabled;
                 logfile.WriteLine("no oof appointment detected and OOFstate not disabled, so set OOFstate to disabled (just in case exchange didn't do this)");
@@ -219,7 +219,7 @@ namespace ExchangeSetOOF
             }
             // Now send the OOF settings to Exchange server. This method will result in a call to EWS.
             try {
-                logfile.WriteLine("sending changed OOF Settings to EWS..");
+                logfile.WriteLine("sending changed OOF Settings to EWS");
                 service.SetUserOofSettings(UserPrincipal.Current.EmailAddress, myOOF);
             } catch (Exception ex) {
                 logfile.WriteLine("Exception occured when sending User OOF Settings to EWS: " + ex.Message);
