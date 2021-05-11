@@ -18,21 +18,23 @@ third line: same for DateLang2
 
 The default settings for above (if no cfg file is found) can be changed in the code:
 
-```VB
+```csharp
 string templateSpec = "VORLAGE:"; // prefix defining OOF reply bodies as a template, ALWAYS uppercase!  
 public static string[] DateLang1 = { "!DatumBis!", "!Datum!", "am", "von", "bis" };  
 public static string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from", "until" };  
 ```
 
 Placeholders are being replaced using following rule (hardcoded):  
-```VB
-DateLangX[0] changed to DateLangX[4] + " " + OOF_EndDate  
+
+`DateLangX[0]` changed to `DateLangX[4] + " " + OOF_EndDate`  
 --> "bis/until dd.mm.yyyy", in case of time component in OOF_EndDate: "bis/until dd.mm.yyyy hh:mm:ss"   
-DateLangX[1] changed to DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate  
+
+`DateLangX[1]` changed to `DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate`  
 --> "von/from dd.mm.yyyy bis/until dd.mm.yyyy", in case of time component in OOF_EndDate/StartDate: "bis/until dd.mm.yyyy hh:mm:ss"  
-in case of whole single day absences both DateLangX[0] and DateLangX[1] are being replaced by DateLangX[2] + " " + OOF_StartDate  
+
+in case of whole single day absences both `DateLangX[0]` and `DateLangX[1]` are being replaced by `DateLangX[2] + " " + OOF_StartDate`  
 --> "am/on dd.mm.yyyy", there can be no time component for whole day absences!  
-```
+
 
 Install: copy ExchangeSetOOF.exe (optionally ExchangeSetOOF.exe.cfg for different templatespec/replacements) and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
 and Microsoft.Exchange.WebServices.dll) anywhere you want and start on a regular basis (e.g. using task scheduler, the vb script "setTask.vbs" does this automatically), execution hints/exceptions are sent to c:\temp\ExchangeSetOOF.log for problem determination.
