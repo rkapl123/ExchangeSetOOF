@@ -14,8 +14,8 @@ namespace ExchangeSetOOF
         // prefix that defines OOF reply bodies to act as a template, ALWAYS uppercase (converted in code)
         static string templateSpec = "VORLAGE:";
         // placeholders and replacements for two languages (for replacement rules see ExchangeSetOOF.exe.cfg)
-        public static string[] DateLang1 = { "!DatumBis!", "!Datum!", "am", "von", "bis" };
-        public static string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from", "until" };
+        public static string[] DateLang1 = { "!DatumBis!", "!Datum!", "am", "von", "bis", "true" };
+        public static string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from", "until", "true" };
 
 
         static void Main(string[] args) {
@@ -158,13 +158,18 @@ namespace ExchangeSetOOF
                 replyTextInt = replyTextInt.Replace(templateSpec, "");
                 replyTextExt = replyTextExt.Replace(templateSpec, "");
                 // convert end date to string for OOF Message
-                string myEndOOFDateStr, myStartOOFDateStr;
+                string myEndOOFDateStr, myStartOOFDateStr, myEndOOFDateStrPresent;
                 if (myEndOOFDate.TimeOfDay.ToString() == "00:00:00") { // modify whole dates
                     // end date is next day 00:00:00, which is too far, when truncated to date part only...
                     myEndOOFDateStr = myEndOOFDate.AddDays(-1).ToShortDateString();
+                    // calc next business day to show the date when we're in the office present again (if last part of DateLang string is "true")
+                    myEndOOFDateStrPresent = myEndOOFDate.AddBusinessDays(1).AddDays(-1).ToShortDateString();
                 } else {
                     myEndOOFDateStr = myEndOOFDate.ToString(); // incl. time part
+                    myEndOOFDateStrPresent = myEndOOFDate.ToString(); // incl. time part
                 }
+                // notifcation ends one day before returning
+                DateTime myEndOOFDateNotify = myEndOOFDate.AddBusinessDays(1).AddDays(-2);
                 // convert start date to string for OOF Message
                 if (myStartOOFDate.TimeOfDay.ToString() == "00:00:00") { // modify whole dates
                     myStartOOFDateStr = myStartOOFDate.ToShortDateString();
@@ -173,20 +178,26 @@ namespace ExchangeSetOOF
                 }
                 // replace template variables in two languages
                 if (myEndOOFDate != myStartOOFDate) {
-                    replyTextInt = replyTextInt.Replace(DateLang1[0], DateLang1[4] + " " + myEndOOFDateStr);
-                    replyTextInt = replyTextInt.Replace(DateLang2[0], DateLang2[4] + " " + myEndOOFDateStr);
-                    replyTextInt = replyTextInt.Replace(DateLang1[1], DateLang1[3] + " " + myStartOOFDateStr + " " + DateLang1[4] + " " + myEndOOFDateStr);
-                    replyTextInt = replyTextInt.Replace(DateLang2[1], DateLang2[3] + " " + myStartOOFDateStr + " " + DateLang2[4] + " " + myEndOOFDateStr);
-                    replyTextExt = replyTextExt.Replace(DateLang1[0], DateLang1[4] + " " + myEndOOFDateStr);
-                    replyTextExt = replyTextExt.Replace(DateLang2[0], DateLang2[4] + " " + myEndOOFDateStr);
-                    replyTextExt = replyTextExt.Replace(DateLang1[1], DateLang1[3] + " " + myStartOOFDateStr + " " + DateLang1[4] + " " + myEndOOFDateStr);
-                    replyTextExt = replyTextExt.Replace(DateLang2[1], DateLang2[3] + " " + myStartOOFDateStr + " " + DateLang2[4] + " " + myEndOOFDateStr);
+                    // in case there is only the end day to be shown ("!DatumBis!"/"!DateTo!") only show the Date
+                    replyTextInt = replyTextInt.Replace(DateLang1[0], (DateLang1[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
+                    replyTextInt = replyTextInt.Replace(DateLang2[0], (DateLang2[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
+                    // in case there are both the start and the end day to be shown ("!Datum!"/"!Date!")
+                    replyTextInt = replyTextInt.Replace(DateLang1[1], DateLang1[3] + " " + myStartOOFDateStr + " " + DateLang1[4] + " " + (DateLang1[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
+                    replyTextInt = replyTextInt.Replace(DateLang2[1], DateLang2[3] + " " + myStartOOFDateStr + " " + DateLang2[4] + " " + (DateLang2[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
+                    // the same for the external message
+                    replyTextExt = replyTextExt.Replace(DateLang1[0], DateLang1[4] + " " + (DateLang1[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
+                    replyTextExt = replyTextExt.Replace(DateLang2[0], DateLang2[4] + " " + (DateLang2[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
+                    replyTextExt = replyTextExt.Replace(DateLang1[1], DateLang1[3] + " " + myStartOOFDateStr + " " + DateLang1[4] + " " + (DateLang1[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
+                    replyTextExt = replyTextExt.Replace(DateLang2[1], DateLang2[3] + " " + myStartOOFDateStr + " " + DateLang2[4] + " " + (DateLang2[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
                 } else {
-                    // special case: exactly one day
+                    // special case: duration of OOF is exactly one day, always only show the start date
+                    // in case there is only the end day to be shown ("!DatumBis!"/"!DateTo!")
                     replyTextInt = replyTextInt.Replace(DateLang1[0], DateLang1[2] + " " + myStartOOFDateStr);
                     replyTextInt = replyTextInt.Replace(DateLang2[0], DateLang2[2] + " " + myStartOOFDateStr);
+                    // in case there are both the start and the end day to be shown ("!Datum!"/"!Date!")
                     replyTextInt = replyTextInt.Replace(DateLang1[1], DateLang1[2] + " " + myStartOOFDateStr);
                     replyTextInt = replyTextInt.Replace(DateLang2[1], DateLang2[2] + " " + myStartOOFDateStr);
+                    // the same for the external message
                     replyTextExt = replyTextExt.Replace(DateLang1[0], DateLang1[2] + " " + myStartOOFDateStr);
                     replyTextExt = replyTextExt.Replace(DateLang2[0], DateLang2[2] + " " + myStartOOFDateStr);
                     replyTextExt = replyTextExt.Replace(DateLang1[1], DateLang1[2] + " " + myStartOOFDateStr);
@@ -200,8 +211,8 @@ namespace ExchangeSetOOF
                 // Set the OOF status to scheduled time period.
                 myOOF.State = OofState.Scheduled;
                 // Select the scheduled time period to send OOF replies.
-                myOOF.Duration = new TimeWindow(myStartOOFDate, myEndOOFDate);
-                logfile.WriteLine("oof appointment detected, so schedule set to " + myStartOOFDate.ToString() + " - " + myEndOOFDate.ToString() + ", oof state set to scheduled and int/ext replies set changed accordingly:");
+                myOOF.Duration = new TimeWindow(myStartOOFDate, myEndOOFDateNotify);
+                logfile.WriteLine("oof appointment detected, so schedule set to " + myStartOOFDate.ToString() + " - " + myEndOOFDateNotify.ToString() + ", oof state set to scheduled and int/ext replies set changed accordingly:");
                 logfile.WriteLine("=================================================== internal Reply:");
                 logfile.WriteLine(myOOF.InternalReply.Message);
                 logfile.WriteLine("=================================================== external Reply:");
