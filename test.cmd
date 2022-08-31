@@ -1,2 +1,2 @@
-bin\Debug\ExchangeSetOOF.exe
+bin\Release\ExchangeSetOOF.exe
 pause

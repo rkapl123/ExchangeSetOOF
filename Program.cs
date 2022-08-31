@@ -13,15 +13,15 @@ namespace ExchangeSetOOF {
         // prefix that defines OOF reply bodies to act as a template, ALWAYS uppercase (converted in code)
         static string templateSpec = "VORLAGE:";
         // placeholders and replacements for two languages (for replacement rules see ExchangeSetOOF.exe.cfg)
-        public static string[] DateLang1 = { "!DatumBis!", "!Datum!", "am", "von", "bis", "true" };
-        public static string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from", "until", "true" };
+        public static string[] DateLang1 = { "!BisDatum!", "!VonDatumBisDatum!", "am", "von", "bis", "true" };
+        public static string[] DateLang2 = { "!ToDate!", "!FromDateToDate!", "on", "from", "until", "true" };
         public static StreamWriter logfile;
         public static string EasterSetting;
         public static List<string> holidays;
 
         static void Main(string[] args) {
             try {
-                logfile = new StreamWriter("C:\\temp\\ExchangeSetOOF.log", false, System.Text.Encoding.GetEncoding(1252));
+                logfile = new StreamWriter(System.Reflection.Assembly.GetExecutingAssembly().Location + ".log", false, System.Text.Encoding.GetEncoding(1252));
             } catch (Exception ex) {
                 MessageBox.Show("Exception occurred when trying to write to log: " + ex.Message);
                 return;
@@ -171,8 +171,8 @@ namespace ExchangeSetOOF {
                 // replace template variables in two languages
                 if (myEndOOFDate != myStartOOFDate) {
                     // in case there is only the end day to be shown ("!DatumBis!"/"!DateTo!") only show the Date
-                    replyTextInt = replyTextInt.Replace(DateLang1[0], (DateLang1[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
-                    replyTextInt = replyTextInt.Replace(DateLang2[0], (DateLang2[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
+                    replyTextInt = replyTextInt.Replace(DateLang1[0], DateLang1[4] + " " + (DateLang1[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
+                    replyTextInt = replyTextInt.Replace(DateLang2[0], DateLang2[4] + " " + (DateLang2[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
                     // in case there are both the start and the end day to be shown ("!Datum!"/"!Date!")
                     replyTextInt = replyTextInt.Replace(DateLang1[1], DateLang1[3] + " " + myStartOOFDateStr + " " + DateLang1[4] + " " + (DateLang1[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
                     replyTextInt = replyTextInt.Replace(DateLang2[1], DateLang2[3] + " " + myStartOOFDateStr + " " + DateLang2[4] + " " + (DateLang2[5] == "true" ? myEndOOFDateStrPresent : myEndOOFDateStr));
@@ -220,8 +220,17 @@ namespace ExchangeSetOOF {
                 }
             } else if (oofAppointment == null && myOOF.State != OofState.Disabled) {
                 // just in case exchange server didn't disable OOF automatically.
-                myOOF.State = OofState.Disabled;
                 logMsg("no OOF appointment detected and OOFstate not disabled, so set OOFstate to disabled (just in case exchange didn't do this)");
+                myOOF.State = OofState.Disabled;
+                if (Registry.GetValue(keyName, "OOFtemplateInt", "").ToString() != "") {
+                    myOOF.InternalReply.Message = Registry.GetValue(keyName, "OOFtemplateInt", "").ToString();
+                }
+                if (Registry.GetValue(keyName, "OOFtemplateExt", "").ToString() != "") {
+                    myOOF.ExternalReply.Message = Registry.GetValue(keyName, "OOFtemplateExt", "").ToString();
+                }
+                logMsg("OOFstate set to disabled, templates restored from registry:");
+                logMsg("internal Reply:" + myOOF.InternalReply.Message);
+                logMsg("external Reply:" + myOOF.ExternalReply.Message);
                 // Now send the OOF settings to Exchange server. This method will result in a call to EWS.
                 try {
                     logMsg("sending OOFState = Disabled to EWS");
