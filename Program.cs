@@ -1,14 +1,13 @@
 ﻿using System;
 using Microsoft.Exchange.WebServices.Data; // Exchange Web Service reference
-using System.DirectoryServices.AccountManagement; // required to get the email adress of the currently logged in user
+using System.DirectoryServices.AccountManagement; // required to get the email address of the currently logged in user
 using Microsoft.Win32; // required for registry handling
-using System.IO; // required for logfile
+using System.IO; // required for log file
 using System.Windows.Forms;
+using System.Collections.Generic;
 
-namespace ExchangeSetOOF
-{
-    class Program
-    {
+namespace ExchangeSetOOF {
+    class Program {
         // Exchange web service that we're going to connect to
         static ExchangeService service;
         // prefix that defines OOF reply bodies to act as a template, ALWAYS uppercase (converted in code)
@@ -16,29 +15,33 @@ namespace ExchangeSetOOF
         // placeholders and replacements for two languages (for replacement rules see ExchangeSetOOF.exe.cfg)
         public static string[] DateLang1 = { "!DatumBis!", "!Datum!", "am", "von", "bis", "true" };
         public static string[] DateLang2 = { "!DateTo!", "!Date!", "on", "from", "until", "true" };
-
+        public static StreamWriter logfile;
+        public static string EasterSetting;
+        public static List<string> holidays;
 
         static void Main(string[] args) {
-            StreamWriter logfile;
             try {
                 logfile = new StreamWriter("C:\\temp\\ExchangeSetOOF.log", false, System.Text.Encoding.GetEncoding(1252));
             } catch (Exception ex) {
-                MessageBox.Show ("Exception occured when trying to write to log: " + ex.Message);
+                MessageBox.Show("Exception occurred when trying to write to log: " + ex.Message);
                 return;
             }
-            // reading config file for templateSpec and DateLang1 and DateLang2 placeholders
-            logfile.WriteLine("starting ExchangeSetOOF");
+            // reading configuration file for templateSpec and DateLang1 and DateLang2 placeholders
+            logMsg("starting ExchangeSetOOF");
             try {
                 StreamReader configfile = new StreamReader(System.Reflection.Assembly.GetExecutingAssembly().Location + ".cfg");
                 templateSpec = configfile.ReadLine().ToUpper();
-                string DateLang1Str = configfile.ReadLine();
-                string DateLang2Str = configfile.ReadLine();
-                DateLang1 = DateLang1Str.Split('\t');
-                DateLang2 = DateLang2Str.Split('\t');
+                string readline = configfile.ReadLine();
+                DateLang1 = readline.Split('\t');
+                readline = configfile.ReadLine();
+                DateLang2 = readline.Split('\t');
+                readline = configfile.ReadLine();
+                holidays = new List<string>(readline.Split('\t'));
+                EasterSetting = configfile.ReadLine().ToUpper();
+
                 configfile.Close();
             } catch (Exception ex) {
-                logfile.WriteLine("Exception occured when reading config file " + System.Reflection.Assembly.GetExecutingAssembly().Location + ".cfg" + " for ExchangeSetOOF.exe: " + ex.Message);
-                logfile.Close();
+                logFinal("Exception occurred when reading configuration file " + System.Reflection.Assembly.GetExecutingAssembly().Location + ".cfg" + " for ExchangeSetOOF.exe: " + ex.Message);
                 return;
             }
 
@@ -48,15 +51,14 @@ namespace ExchangeSetOOF
                 service.UseDefaultCredentials = true;
                 service.AutodiscoverUrl(UserPrincipal.Current.EmailAddress, RedirectionUrlValidationCallback);
             } catch (Exception ex) {
-                logfile.WriteLine("Exception occured when setting service for EWS: " + ex.Message);
-                logfile.Close();
+                logFinal("Exception occurred when setting service for EWS: " + ex.Message);
                 return;
             }
 
             // find next "out of office" appointment being either today or on the next business day
-            logfile.WriteLine("getting oof appointments");
+            logMsg("getting OOF appointments");
             DateTime startDate = DateTime.Now;    //startDate = DateTime.Parse("2016-08-05"); //uncomment to test/debug
-            DateTime endDate = startDate.AddBusinessDays(2); // need to add 2 days because otherwise the endDate is <nextBDate> 00:00:00
+            DateTime endDate = startDate.AddBusinessDays(2, holidays, EasterSetting); // need to add 2 days because otherwise the endDate is <nextBDate> 00:00:00
             // Initialize the calendar folder object with only the folder ID.
             FindItemsResults<Appointment> appointments = null;
             try {
@@ -68,8 +70,7 @@ namespace ExchangeSetOOF
                 // Retrieve a collection of appointments by using the calendar view.
                 appointments = calendar.FindAppointments(cView);
             } catch (Exception ex) {
-                logfile.WriteLine("Exception occured when searching OOF appointments in users calendar: " + ex.Message);
-                logfile.Close();
+                logFinal("Exception occurred when searching OOF appointments in users calendar: " + ex.Message);
                 return;
             }
 
@@ -79,15 +80,10 @@ namespace ExchangeSetOOF
             foreach (Appointment a in appointments) {
                 if (a.LegacyFreeBusyStatus == LegacyFreeBusyStatus.OOF) {
                     // search for longest OOF appointment
-                    if (oofAppointment == null  || oofAppointment.End < a.End) {
-                        //  oof end dates need to end in the future (otherwise results in an exception when setting the OOF schedule)
+                    if (oofAppointment == null || oofAppointment.End < a.End) {
+                        //  OOF end dates need to end in the future (otherwise results in an exception when setting the OOF schedule)
                         if (a.End > DateTime.Now) {
-                            logfile.Write("oofAppointment " + a.Subject + " detected,Start: " + a.Start.ToString());
-                            logfile.Write(",(later)End: " + a.End.ToString());
-                            logfile.Write(",LegacyFreeBusyStatus: " + a.LegacyFreeBusyStatus.ToString());
-                            logfile.Write(",IsRecurring: " + a.IsRecurring.ToString());
-                            logfile.Write(",AppointmentType: " + a.AppointmentType.ToString());
-                            logfile.WriteLine();
+                            logMsg("oofAppointment " + a.Subject + " detected,Start: " + a.Start.ToString() + ",(later)End: " + a.End.ToString() + ",LegacyFreeBusyStatus: " + a.LegacyFreeBusyStatus.ToString() + ",IsRecurring: " + a.IsRecurring.ToString() + ",AppointmentType: " + a.AppointmentType.ToString());
                             // set the oofAppointment to control the OOF setting later...
                             oofAppointment = a;
                             myStartOOFDate = a.Start;
@@ -97,14 +93,13 @@ namespace ExchangeSetOOF
                 }
             }
 
-            // change automatic replies (out of office), first get the existing ones (template!)
-            logfile.WriteLine("getting users OOF settings");
+            // change automatic replies (out of office), first get the existing ones, used as templates for the actual ones.
+            logMsg("getting users OOF settings");
             OofSettings myOOF = null;
             try {
                 myOOF = service.GetUserOofSettings(UserPrincipal.Current.EmailAddress);
             } catch (Exception ex) {
-                logfile.WriteLine("Exception occured when getting users OOF settings: " + ex.Message);
-                logfile.Close();
+                logFinal("Exception occurred when getting users OOF settings: " + ex.Message);
                 return;
             }
             // templates for internal and external replies are stored in registry, if key doesn't exist, create it
@@ -120,14 +115,13 @@ namespace ExchangeSetOOF
             if (myOOF.InternalReply.Message.ToUpper().Contains(templateSpec) && myOOF.ExternalReply.Message.ToUpper().Contains(templateSpec)) {
                 Registry.SetValue(keyName, "OOFtemplateInt", myOOF.InternalReply.Message, RegistryValueKind.String);
                 Registry.SetValue(keyName, "OOFtemplateExt", myOOF.ExternalReply.Message, RegistryValueKind.String);
-                logfile.WriteLine("Both internal and external replies contain templateSpec, so templates saved to registry");
-                logfile.WriteLine("=================================================== internal Reply Template:");
-                logfile.WriteLine(myOOF.InternalReply.Message);
-                logfile.WriteLine("=================================================== external Reply Template:");
-                logfile.WriteLine(myOOF.ExternalReply.Message);
-                logfile.WriteLine("===================================================");
-                logfile.Flush();
-            // OOF not enabled or scheduled -> restore Template (only if non empty!)
+                logMsg("Both internal and external replies contain templateSpec, so templates saved to registry");
+                logMsg("=================================================== internal Reply Template:");
+                logMsg(myOOF.InternalReply.Message);
+                logMsg("=================================================== external Reply Template:");
+                logMsg(myOOF.ExternalReply.Message);
+                logMsg("===================================================");
+                // OOF not enabled or scheduled -> restore Template (only if non empty!)
             } else if (myOOF.State == OofState.Disabled) {
                 if (Registry.GetValue(keyName, "OOFtemplateInt", "").ToString() != "") {
                     myOOF.InternalReply.Message = Registry.GetValue(keyName, "OOFtemplateInt", "").ToString();
@@ -135,18 +129,16 @@ namespace ExchangeSetOOF
                 if (Registry.GetValue(keyName, "OOFtemplateExt", "").ToString() != "") {
                     myOOF.ExternalReply.Message = Registry.GetValue(keyName, "OOFtemplateExt", "").ToString();
                 }
-                logfile.WriteLine("OOFstate disabled, so templates restored from registry:");
-                logfile.WriteLine("internal Reply:" + myOOF.InternalReply.Message);
-                logfile.WriteLine("external Reply:" + myOOF.ExternalReply.Message);
-                logfile.Flush();
+                logMsg("OOFstate disabled, so templates restored from registry:");
+                logMsg("internal Reply:" + myOOF.InternalReply.Message);
+                logMsg("external Reply:" + myOOF.ExternalReply.Message);
             } else {
-                logfile.WriteLine("nothing to do with templates: OOF.State = " + myOOF.State.ToString());
-                logfile.Flush();
+                logMsg("nothing to do with templates: OOF.State = " + myOOF.State.ToString());
             }
 
 
-            // out of office appointment today or on the next (business) day -> enable OOF
-            if (!(oofAppointment == null)) {
+            // out of office appointment today or on the next (business) day -> enable OOF, but only if not already enabled or scheduled (as this would reactivate OOF messages again, which is undesired)
+            if (oofAppointment != null && myOOF.State != OofState.Enabled && myOOF.State != OofState.Scheduled) {
                 string replyTextInt = "", replyTextExt = "";
                 if (Registry.GetValue(keyName, "OOFtemplateInt", "").ToString() != "") {
                     replyTextInt = Registry.GetValue(keyName, "OOFtemplateInt", "").ToString();
@@ -163,13 +155,13 @@ namespace ExchangeSetOOF
                     // end date is next day 00:00:00, which is too far, when truncated to date part only...
                     myEndOOFDateStr = myEndOOFDate.AddDays(-1).ToShortDateString();
                     // calc next business day to show the date when we're in the office present again (if last part of DateLang string is "true")
-                    myEndOOFDateStrPresent = myEndOOFDate.AddBusinessDays(1).AddDays(-1).ToShortDateString();
+                    myEndOOFDateStrPresent = myEndOOFDate.AddBusinessDays(1, holidays, EasterSetting).AddDays(-1).ToShortDateString();
                 } else {
                     myEndOOFDateStr = myEndOOFDate.ToString(); // incl. time part
                     myEndOOFDateStrPresent = myEndOOFDate.ToString(); // incl. time part
                 }
-                // notifcation ends one day before returning
-                DateTime myEndOOFDateNotify = myEndOOFDate.AddBusinessDays(1).AddDays(-2);
+                // notification ends one day before returning
+                DateTime myEndOOFDateNotify = myEndOOFDate.AddBusinessDays(1, holidays, EasterSetting).AddDays(-2);
                 // convert start date to string for OOF Message
                 if (myStartOOFDate.TimeOfDay.ToString() == "00:00:00") { // modify whole dates
                     myStartOOFDateStr = myStartOOFDate.ToShortDateString();
@@ -212,33 +204,36 @@ namespace ExchangeSetOOF
                 myOOF.State = OofState.Scheduled;
                 // Select the scheduled time period to send OOF replies.
                 myOOF.Duration = new TimeWindow(myStartOOFDate, myEndOOFDateNotify);
-                logfile.WriteLine("oof appointment detected, so schedule set to " + myStartOOFDate.ToString() + " - " + myEndOOFDateNotify.ToString() + ", oof state set to scheduled and int/ext replies set changed accordingly:");
-                logfile.WriteLine("=================================================== internal Reply:");
-                logfile.WriteLine(myOOF.InternalReply.Message);
-                logfile.WriteLine("=================================================== external Reply:");
-                logfile.WriteLine(myOOF.ExternalReply.Message);
-                logfile.WriteLine("===================================================");
-                logfile.Flush();
+                logMsg("OOF appointment detected, so schedule set to " + myStartOOFDate.ToString() + " - " + myEndOOFDateNotify.ToString() + ", OOF state set to scheduled and int/ext replies set changed accordingly:");
+                logMsg("=================================================== internal Reply:");
+                logMsg(myOOF.InternalReply.Message);
+                logMsg("=================================================== external Reply:");
+                logMsg(myOOF.ExternalReply.Message);
+                logMsg("===================================================");
+                // Now send the OOF settings to Exchange server. This method will result in a call to EWS.
+                try {
+                    logMsg("sending OOF Settings and OOFState = Scheduled to EWS");
+                    service.SetUserOofSettings(UserPrincipal.Current.EmailAddress, myOOF);
+                } catch (Exception ex) {
+                    logFinal("Exception occurred when sending to EWS: " + ex.Message);
+                    return;
+                }
             } else if (oofAppointment == null && myOOF.State != OofState.Disabled) {
                 // just in case exchange server didn't disable OOF automatically.
                 myOOF.State = OofState.Disabled;
-                logfile.WriteLine("no oof appointment detected and OOFstate not disabled, so set OOFstate to disabled (just in case exchange didn't do this)");
-                logfile.Flush();
+                logMsg("no OOF appointment detected and OOFstate not disabled, so set OOFstate to disabled (just in case exchange didn't do this)");
+                // Now send the OOF settings to Exchange server. This method will result in a call to EWS.
+                try {
+                    logMsg("sending OOFState = Disabled to EWS");
+                    service.SetUserOofSettings(UserPrincipal.Current.EmailAddress, myOOF);
+                } catch (Exception ex) {
+                    logFinal("Exception occurred when sending to EWS: " + ex.Message);
+                    return;
+                }
             } else {
-                logfile.WriteLine("nothing to do with replacing/scheduling: OOF State: " + myOOF.State.ToString());
-                logfile.Flush();
+                logMsg("nothing to do with replacing/scheduling/setting state (OOF State: " + myOOF.State.ToString() + ")");
             }
-            // Now send the OOF settings to Exchange server. This method will result in a call to EWS.
-            try {
-                logfile.WriteLine("sending changed OOF Settings to EWS");
-                service.SetUserOofSettings(UserPrincipal.Current.EmailAddress, myOOF);
-            } catch (Exception ex) {
-                logfile.WriteLine("Exception occured when sending User OOF Settings to EWS: " + ex.Message);
-                logfile.Close();
-                return;
-            }
-            logfile.WriteLine("finished ExchangeSetOOF");
-            logfile.Close();
+            logFinal("finished ExchangeSetOOF");
         }
 
         private static bool RedirectionUrlValidationCallback(string redirectionUrl) {
@@ -253,6 +248,16 @@ namespace ExchangeSetOOF
                 result = true;
             }
             return result;
+        }
+
+        private static void logMsg(string msg) {
+            logfile.WriteLine(msg);
+            logfile.Flush();
+        }
+
+        private static void logFinal(string msg) {
+            logMsg(msg);
+            logfile.Close();
         }
     }
 
@@ -274,67 +279,30 @@ namespace ExchangeSetOOF
             return new DateTime(year, month, day);
         }
 
-        public static bool isHoliday(this DateTime theDate) {
+        public static bool isHoliday(this DateTime theDate, List<string> holidays, string EasterSetting) {
             string datechoice = theDate.Day + "." + theDate.Month;
-            // fixed austrian holidays
-            switch (datechoice) {
-                case "1.1":
-                    return true;
-                case "6.1":
-                    return true;
-                case "1.5":
-                    return true;
-                case "15.8":
-                    return true;
-                case "26.10":
-                    return true;
-                case "1.11":
-                    return true;
-                case "8.12":
-                    return true;
-                case "24.12":
-                    return true;
-                case "25.12":
-                    return true;
-                case "26.12":
-                    return true;
-            }
-            // weekends
-            if ((theDate.DayOfWeek == DayOfWeek.Saturday) || (theDate.DayOfWeek == DayOfWeek.Sunday)) {
-                return true;
-            }
-            // floating (EasterSunday dependent) austrian holidays:
-            // Easter Monday (Good Friday would be -2), ascension day (Christi Himmelfahrt), whit monday (Pfingstmontag), corpus christi day (Fronleichnam)
-            if ((theDate == EasterSunday(theDate.Year).AddDays(1)) || (theDate == EasterSunday(theDate.Year).AddDays(39)) || (theDate == EasterSunday(theDate.Year).AddDays(50)) || (theDate == EasterSunday(theDate.Year).AddDays(60))) {
-                return true;
+            // fixed holidays
+            if (holidays.Contains(datechoice)) return true;
+            // weekends (leave empty the holiday line if they also should not be respected)
+            if (holidays.Count > 0 && (theDate.DayOfWeek == DayOfWeek.Saturday || theDate.DayOfWeek == DayOfWeek.Sunday)) return true;
+            // floating (EasterSunday dependent) holidays:
+            // Good Friday, Easter Monday, Ascension day, Whit Monday, Corpus Christi day
+            if (theDate == EasterSunday(theDate.Year).AddDays(-2) || theDate == EasterSunday(theDate.Year).AddDays(1) || theDate == EasterSunday(theDate.Year).AddDays(39) || theDate == EasterSunday(theDate.Year).AddDays(50) || theDate == EasterSunday(theDate.Year).AddDays(60)) {
+                if (theDate == EasterSunday(theDate.Year).AddDays(-2)) {
+                    if (EasterSetting == "EASTERGF") return true;
+                } else {
+                    if (EasterSetting.Contains("EASTER")) return true;
+                }
             }
             return false;
         }
 
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-01-01").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-01-06").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-05-01").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-08-15").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-10-26").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-11-01").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-12-08").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-12-24").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-12-25").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-12-26").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-04-05").isHoliday()); //false - maundy thursday
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-04-06").isHoliday()); //false - good friday
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-04-07").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-04-08").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-04-09").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-05-17").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-05-28").isHoliday());
-            //logfile.WriteLine("{0}", DateTime.Parse("2012-06-07").isHoliday());
-
-        public static DateTime AddBusinessDays(this DateTime date, int days) {
+        public static DateTime AddBusinessDays(this DateTime date, int days, List<string> holidays, string EasterSetting) {
             if (days == 0) return date;
             while (days > 0) {
                 date = date.AddDays(1);
-                if (date.isHoliday()) {
+                // add an additional day if it is a holiday or weekend (only regarded when any holiday is set)
+                if (date.isHoliday(holidays, EasterSetting)) {
                     date = date.AddDays(1);
                 } else {
                     days--;
