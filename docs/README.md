@@ -1,7 +1,6 @@
 # ExchangeSetOOF
-programmatic setting of automatic replies (out of office) in an exchange environment based on OOF appointments.
 
-ExchangeSetOOF logs in to the currently logged in users account (using EWS AutoDiscover with users account Emailaddress using System.DirectoryServices.AccountManagement)
+ExchangeSetOOF logs in to the currently logged in users account (using EWS AutoDiscover with users account Email-address using System.DirectoryServices.AccountManagement)
 and searches the appointments between today and the next business day (based holidays, configured in ExchangeSetOOF.exe.cfg) for appointments being set "away".
 
 If any such appointment is found, ExchangeSetOOF replaces the template's date placeholder with the respective end date and (if wanted) also start date.
@@ -28,14 +27,14 @@ public static string[] DateLang2 = { "!ToDate!", "!FromDateToDate!", "on", "from
 ```
 
 ## Placeholders are being replaced using following rule (hardcoded):
-OOF_EndDate is set to the next business day after the absence in case DateLangX[5] (last parameter) is "true" thus allowing ".. until my return on <date>".  
-If this is not the case, OOF_EndDate is set to the last day of the absence.  
+`OOF_EndDate` is set to the next business day after the absence in case `DateLangX[5]` (last parameter) is "true" thus allowing ".. until my return on <date>".  
+If this is not the case, `OOF_EndDate` is set to the last day of the absence.  
 
-DateLangX[0] (!ToDate!/!BisDatum!) is changed to `DateLangX[4] + " " + OOF_EndDate`  
---> "dd.mm.yyyy", in case of time component in OOF_EndDate: "dd.mm.yyyy hh:mm:ss"   
-DateLangX[1] changed to `DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate`  
---> "von/from dd.mm.yyyy bis/until dd.mm.yyyy", in case of time component in OOF_EndDate/StartDate: "bis/until dd.mm.yyyy hh:mm:ss"  
-in case of whole single day absences both DateLangX[0] and DateLangX[1] are being replaced by DateLangX[2] + " " + OOF_StartDate  
+`DateLangX[0]` (`!ToDate!/!BisDatum!`) is changed to `DateLangX[4] + " " + OOF_EndDate`  
+--> "dd.mm.yyyy", in case of time component in `OOF_EndDate`: "dd.mm.yyyy hh:mm:ss"   
+`DateLangX[1]` is changed to `DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate`  
+--> "von/from dd.mm.yyyy bis/until dd.mm.yyyy", in case of time component in `OOF_EndDate/StartDate`: "bis/until dd.mm.yyyy hh:mm:ss"  
+in case of whole single day absences both `DateLangX[0]` and `DateLangX[1]` are being replaced by `DateLangX[2] + " " + OOF_StartDate`  
 --> "am/on dd.mm.yyyy", there can be no time component for whole day absences!  
 
 Examples for the above:  
@@ -43,7 +42,7 @@ Examples for the above:
 For a single day absence only on 01/12/2005 it would be "I'm on holiday on 01/12/2005".
 "I'm on holiday !ToDate!" would be changed to "I'm on holiday until 05/12/2005" (for an absence that was found in the calendar from any day up to 05/12/2005).
 
-If you want to completely control the from/to/until indicators in your template, this is just possible for the return date only (!ToDate!/!BisDatum!) setting. In this case remove both "on" and "until", then you'll get the date/time only.
+If you want to completely control the from/to/until indicators in your template, this is just possible for the return date only (`!ToDate!/!BisDatum!`) setting. In this case remove both "on" and "until", then you'll get the date/time only.
 
 The date format is using the current locale, so it might be different from "dd.mm.yyyy" or "dd.mm.yyyy hh:mm:ss" !
 
