@@ -38,14 +38,14 @@ EASTER
 ```
 
 ## Placeholders are being replaced using following rule (hardcoded):
-`OOF_EndDate` is set to the next business day after the absence in case `DateLangX[5]` (last parameter) is "true" thus allowing ".. until my return on <date>".  
+`OOF_EndDate` is set to the next business day after the absence in case `DateLangX[5]` (last parameter) is "true" thus allowing ".. until my return on dd/mm/yyyy".  
 If this is not the case, `OOF_EndDate` is set to the last day of the absence.  
 
 Any appearance of `DateLangX[0]` (`!ToDate!/!BisDatum!`) is changed to `DateLangX[4] + " " + OOF_EndDate`  
 --> "until dd/mm/yyyy", in case of an additional time component in `OOF_EndDate`: "until dd/mm/yyyy hh:mm:ss"   
 
 Any appearance of `DateLangX[1]` is changed to `DateLangX[3] + " " + OOF_StartDate + " " + DateLangX[4] + " " + OOF_EndDate`  
---> "from dd/mm/yyyy bis/until dd/mm/yyyy", in case of an additional time component in `OOF_EndDate/StartDate`: "until dd/mm/yyyy hh:mm:ss"  
+--> "from dd/mm/yyyy until dd/mm/yyyy", in case of an additional time component in `OOF_EndDate/StartDate`: "from dd/mm/yyyy hh:mm:ss until dd/mm/yyyy hh:mm:ss"  
 
 in case of whole single day absences both `DateLangX[0]` and `DateLangX[1]` are being replaced by `DateLangX[2] + " " + OOF_StartDate`  
 --> "on dd/mm/yyyy", there can be no time component for whole day absences!  
@@ -59,9 +59,11 @@ If you want to completely control the from/to/until indicators in your template,
 
 The date format is using the current locale, so it might be different from "dd.mm.yyyy" or "dd.mm.yyyy hh:mm:ss" !
 
-Install: copy ExchangeSetOOF.exe (optionally ExchangeSetOOF.exe.cfg for different templatespec/replacements) and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
+## Install
+copy ExchangeSetOOF.exe (optionally ExchangeSetOOF.exe.cfg for different template specifications/replacements) and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
 and Microsoft.Exchange.WebServices.dll) anywhere you want and start on a regular basis (e.g. using task scheduler, the vb script "setTask.vbs" does this automatically), execution hints/exceptions are sent to ExchangeSetOOF.exe.log for problem determination.
 
-Build: Download/clone repository to a folder named ExchangeSetOOF.  
-To compile succesfully, you also need to download Managed EWS (used/tested version 2.2: [https://www.microsoft.com/en-us/download/details.aspx?id=42951](https://www.microsoft.com/en-us/download/details.aspx?id=42951)) and set references to Microsoft.Exchange.WebServices.Auth.dll
+## Build
+Download/clone repository to a folder named ExchangeSetOOF.  
+To compile successfully, you also need to download Managed EWS (ExchangeSetOOF was used/tested with version 2.2, can be downloaded from nuget: [https://www.nuget.org/packages/Microsoft.Exchange.WebServices/](https://www.nuget.org/packages/Microsoft.Exchange.WebServices/)) and set references to Microsoft.Exchange.WebServices.Auth.dll
 and Microsoft.Exchange.WebServices.dll accordingly.
