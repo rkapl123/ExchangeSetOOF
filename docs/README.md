@@ -5,10 +5,10 @@ and searches the appointments between today and the next business day (based on 
 
 If any such appointment is found, ExchangeSetOOF replaces the template's date placeholder with the respective end date and (if wanted) also start date.
 The languages used for the replacement of the date placeholders is hardcoded german and english (this can be configured in ExchangeSetOOF.exe.cfg, see below).
-The automatic reply (out of office) is being scheduled to start from the Start Date of the OOF appointment and end on the End Date of the OOF appointment.
+The automatic reply (out of office) is being scheduled to start from the Start Date of the absence appointment (`OOF_StartDate`) and end on the End Date of the OOF appointment (`OOF_EndDate`).
 
 If no such appointment is found and the internal and external replies both contain a template specification (default being hardcoded to "VORLAGE:", this can be configured in ExchangeSetOOF.exe.cfg, see below),
-the replies are stored in the registry as a template, which is being restored after the OOF period has passed.
+the replies are stored in the registry as a template, which is being restored after the absence period has passed.
 
 ## Configuration (language placeholder and calendar):
 Two language placeholder settings can be configured in the accompanying file ExchangeSetOOF.exe.cfg together for filling the templates with the actual dates:  
@@ -37,9 +37,15 @@ VORLAGE:
 EASTER
 ```
 
-## Placeholders are being replaced using following rule (hardcoded):
-`OOF_EndDate` is set to the next business day after the absence in case `DateLangX[5]` (last parameter) is "true" thus allowing ".. until my return on dd/mm/yyyy".  
-If this is not the case, `OOF_EndDate` is set to the last day of the absence.  
+## Placeholders are being replaced using following rules (hardcoded):
+```VB
+Array Idx:	0	1	2	3	4	5
+DateLang1:	!BisDatum!	!VonDatumBisDatum!	am	von	bis	true
+DateLang2:	!ToDate!	!FromDateToDate!	on	from	until	true
+```
+
+The `OOF_EndDate` is set to the next business day after the absence in case `DateLangX[5]` (last parameter) is "true" thus allowing ".. until my return on dd/mm/yyyy".  
+If this is not the case, `OOF_EndDate` is set to the first day of return.  
 
 Any appearance of `DateLangX[0]` (`!ToDate!/!BisDatum!`) is changed to `DateLangX[4] + " " + OOF_EndDate`  
 --> "until dd/mm/yyyy", in case of an additional time component in `OOF_EndDate`: "until dd/mm/yyyy hh:mm:ss"   
