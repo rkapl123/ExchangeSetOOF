@@ -39,7 +39,7 @@ EASTER
 
 ## Placeholders are being replaced using following rules (hardcoded):
 ```VB
-Array Idx:	0	1	2	3	4	5
+Array Idx:	0		1			2	3	4	5
 DateLang1:	!BisDatum!	!VonDatumBisDatum!	am	von	bis	true
 DateLang2:	!ToDate!	!FromDateToDate!	on	from	until	true
 ```
