@@ -63,7 +63,7 @@ For a single day absence only on 01/12/2005 it would be "I'm on holiday on 01/12
 
 If you want to completely control the from/to/until indicators in your template, this is just possible for the return date only (`!ToDate!/!BisDatum!`) setting. In this case remove both "on" and "until", then you'll get the date/time only.
 
-The date format is using the current locale, so it might be different from "dd.mm.yyyy" or "dd.mm.yyyy hh:mm:ss" !
+The date format is using the current locale, so it might be different from "dd/mm/yyyy" or "dd/mm/yyyy hh:mm:ss" !
 
 ## Install
 copy ExchangeSetOOF.exe (optionally ExchangeSetOOF.exe.cfg for different template specifications/replacements) and both Managed EWS assemblies (Microsoft.Exchange.WebServices.Auth.dll
